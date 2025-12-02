@@ -1,0 +1,29 @@
+import pandas as pd
+import numpy as np
+# Reading the given data
+churn_data = pd.read_csv('churn_data.csv')
+customer_data = pd.read_csv('customer_data.csv')
+internet_data = pd.read_csv('internet_data.csv')
+df_merge=pd.merge(churn_data,customer_data,on='customerID',how='inner')
+df_new=pd.merge(df_merge,internet_data,on='customerID',how='inner')
+df_new.head()
+cols_for_YN = []
+
+for col in df_new.columns:
+    unique_vals = set(df_new[col].dropna().unique()) 
+    if unique_vals == {'Yes', 'No'}:
+        cols_for_YN.append(col)
+print(cols_for_YN)
+df_new[cols_for_YN] = df_new[cols_for_YN].replace({
+    'Yes': 1,
+    'No': 0,
+})
+df_new['TotalCharges'] = pd.to_numeric(df_new['TotalCharges'], errors='coerce')
+object_cols = df_new.select_dtypes(include='object').columns
+cols_m2 = [col for col in object_cols if df_new[col].nunique(dropna=True) > 2]
+print("Object columns with more than 2 responses")
+print(cols_m2)
+cols_dummies = [col for col in cols_m2 if col != 'customerID']
+
+df_with_dummies = pd.get_dummies(df_new, columns=cols_dummies)
+df_with_dummies.head()
